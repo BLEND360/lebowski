@@ -6,7 +6,8 @@ jobs=0
 load-plugins=pylint_quotes
 
 [MESSAGES CONTROL]
-disable=missing-class-docstring,
+disable=broad-except,
+        missing-class-docstring,
         missing-function-docstring,
         missing-module-docstring,
         unspecified-encoding
