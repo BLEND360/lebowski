@@ -1,7 +1,6 @@
 #FROM python:3.10-bullseye
-ENV TZ="America/New_York"
-
 FROM nvcr.io/nvidia/pytorch:22.08-py3
+ENV TZ="America/New_York"
 
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
