@@ -1,4 +1,5 @@
-FROM python:3.10-bullseye
+#FROM python:3.10-bullseye
+FROM nvcr.io/nvidia/pytorch:22.08-py3
 
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
