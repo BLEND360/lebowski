@@ -1,5 +1,5 @@
-#FROM python:3.10-bullseye
-FROM nvcr.io/nvidia/pytorch:22.08-py3
+FROM python:3.10-bullseye
+#FROM nvcr.io/nvidia/pytorch:22.08-py3
 RUN apt update && DEBIAN_FRONTEND=noninteractive TZ=America/New_York apt-get install tzdata -y
 ENV TZ="America/New_York"
 ENV RUNNING_USER=nginx
