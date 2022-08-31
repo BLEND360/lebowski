@@ -3,7 +3,8 @@ FROM python:3.10-bullseye
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
 
-ENV HF_DATASETS_CACHE=/theapp/transformer_cache
+ENV HF_DATASETS_CACHE=/theapp/dataset_cache
+ENV TRANSFORMERS_CACHE=/theapp/transformer_cache
 
 RUN apt-get update && apt-get -y upgrade && apt-get install -y build-essential bash nginx supervisor
 RUN useradd --create-home --home-dir ${THEAPP} --shell /sbin/nologin --system ${RUNNING_USER}
