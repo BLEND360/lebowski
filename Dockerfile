@@ -9,7 +9,7 @@ ENV HF_DATASETS_CACHE=/theapp/dataset_cache
 ENV TRANSFORMERS_CACHE=/theapp/transformer_cache
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
-RUN apt-get update && apt-get -y upgrade && apt-get install -y build-essential bash nginx supervisor
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive && apt-get -y upgrade && apt-get install -y build-essential bash nginx supervisor &&
 RUN useradd --create-home --home-dir ${THEAPP} --shell /sbin/nologin --system ${RUNNING_USER}
 USER ${RUNNING_USER}
 RUN python -m venv ${THEAPP}/venv
