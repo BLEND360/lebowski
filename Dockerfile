@@ -1,4 +1,6 @@
-FROM nvidia/cuda:11.7.1-devel-ubuntu20.04
+FROM nvcr.io/nvidia/pytorch:22.08-py3
+
+
 
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
