@@ -6,16 +6,14 @@ import json
 import sqlite3
 
 from flask import Flask, request
-from transformers.pipelines import pipeline
+
 import flask
-import torch
 
 from .app_typing import EndpointRequestJSON
 
 app = Flask(__name__)
 
 DATABASE_FILE = './db.sqlite'
-LAST_DEVICE_INDEX = torch.cuda.device_count() - 1
 
 need_schema = not isfile(DATABASE_FILE)
 if need_schema:
@@ -28,6 +26,10 @@ if need_schema:
 
 @app.route('/', methods=['POST'])
 def endpoint() -> Any:
+    import torch
+    torch.multiprocessing.set_start_method('spawn')
+    LAST_DEVICE_INDEX = torch.cuda.device_count() - 1
+    from transformers.pipelines import pipeline
     if request.json:
         with sqlite3.connect(DATABASE_FILE) as conn:
             cur = conn.cursor()
