@@ -1,18 +1,19 @@
-FROM python:3.10-bullseye
-#FROM nvcr.io/nvidia/pytorch:22.08-py3
-RUN apt update && DEBIAN_FRONTEND=noninteractive TZ=America/New_York apt-get install tzdata -y
-ENV TZ="America/New_York"
+FROM nvidia/cuda:11.7.1-devel-ubuntu20.04
+
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
-
 ENV HF_DATASETS_CACHE=/theapp/dataset_cache
 ENV TRANSFORMERS_CACHE=/theapp/transformer_cache
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN=true
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=America/New_York apt-get -y upgrade && apt-get install -y build-essential bash nginx supervisor
+RUN echo "APT { Get { AllowUnauthenticated "1"; }; };" > /etc/apt/apt.conf.d/99allow-unauth
+RUN echo America/New_York > /etc/timezone
+RUN apt update && apt-get install -y build-essential bash language-pack-en-base nginx software-properties-common supervisor && add-apt-repository ppa:deadsnakes/ppa && apt-get install -y python3.10 python3.10-dev python3.10-venv
 RUN useradd --create-home --home-dir ${THEAPP} --shell /sbin/nologin --system ${RUNNING_USER}
 USER ${RUNNING_USER}
-RUN python -m venv ${THEAPP}/venv
+RUN python3.10 -m venv ${THEAPP}/venv
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} poetry.lock pyproject.toml container-data/* ${THEAPP}/
 RUN mkdir ${THEAPP}/endpoint
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/* $THEAPP/endpoint/
