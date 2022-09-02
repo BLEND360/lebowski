@@ -18,9 +18,9 @@ COPY --chown=${RUNNING_USER}:${RUNNING_USER} environment.yml ${THEAPP}/
 USER ${RUNNING_USER}
 RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/${MINICONDA_SCRIPT} && \
     bash /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
-    ${CONDA} env create -f ${THEAPP}/environment.yml && \
+    ${CONDA} env create --debug -f ${THEAPP}/environment.yml && \
     mkdir ${THEAPP}/endpoint
-RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
+RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} test.py ${THEAPP}/
 RUN ${THEAPP}/miniconda/envs/lebowski/bin/python ${THEAPP}/test.py
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} container-data/* ${THEAPP}/
