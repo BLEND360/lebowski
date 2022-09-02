@@ -1,4 +1,4 @@
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-outside-toplevel,global-statement
 __all__ = ('app',)
 
 from os.path import isfile
@@ -23,6 +23,8 @@ if need_schema:
                               device_id INT NOT NULL CHECK(device_id >= 0),
                               completed INT NOT NULL CHECK(completed == 0 || completed == 1),
                               date_created TEXT NOT NULL)''')
+
+engine: Any = None
 
 
 @app.route('/', methods=['POST'])
@@ -49,9 +51,11 @@ def endpoint() -> Any:
                 '''INSERT INTO jobs(device_id, completed, date_created)
             VALUES (?, 0, datetime("now"))''', (device_id,))
             job_id = cur.execute('SELECT LAST_INSERT_ROWID()').fetchone()[0]
-        engine = pipeline('summarization',
-                          model='google/pegasus-cnn_dailymail',
-                          device=device_id)
+        global engine  # pylint: disable=invalid-name
+        if not engine:
+            engine = pipeline('summarization',
+                              model='google/pegasus-cnn_dailymail',
+                              device=device_id)
         content: EndpointRequestJSON = request.json
         try:
             return engine(
