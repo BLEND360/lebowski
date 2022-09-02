@@ -29,7 +29,7 @@ def endpoint() -> Any:
     # https://stackoverflow.com/questions/34145861/valueerror-failed-to-parse-cpython-sys-version-after-using-conda-command
     import sys
     sys.version = '3.10.1 (main, Aug 13 2022, 12:04:39) [GCC 11.3.0]'
-
+    # Setting the start method must be done before importing transformers.pipeines
     import torch
     try:
         torch.multiprocessing.set_start_method('spawn')
