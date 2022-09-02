@@ -14,8 +14,8 @@ import flask
 from .app_typing import EndpointRequestJSON
 
 app = Flask(__name__)
-engine: Any = None
-last_device_index = 0
+engines: list[Any] = []
+last_device_index = 0  # pylint: disable=invalid-name
 
 DATABASE_FILE = './db.sqlite'
 
@@ -30,8 +30,8 @@ if need_schema:
 
 @postfork
 def preload_engine():
-    global engine, last_device_index  # pylint: disable=invalid-name
-    if not engine:
+    global engines, last_device_index  # pylint: disable=invalid-name,global-variable-not-assigned
+    if len(engines) == 0:
         # https://stackoverflow.com/questions/34145861/valueerror-failed-to-parse-cpython-sys-version-after-using-conda-command
         import sys
         sys.version = '3.10.1 (main, Aug 13 2022, 12:04:39) [GCC 11.3.0]'
@@ -43,10 +43,11 @@ def preload_engine():
             pass
         last_device_index = torch.cuda.device_count() - 1
         from transformers.pipelines import pipeline
-        if not engine:
-            engine = pipeline('summarization',
-                              model='google/pegasus-cnn_dailymail',
-                              device=0)
+        for i in range(torch.cuda.device_count()):
+            engines.append(
+                pipeline('summarization',
+                         model='google/pegasus-cnn_dailymail',
+                         device=i))
 
 
 @app.route('/', methods=['POST'])
@@ -64,14 +65,20 @@ def endpoint() -> Any:
             VALUES (?, 0, datetime("now"))''', (device_id,))
             job_id = cur.execute('SELECT LAST_INSERT_ROWID()').fetchone()[0]
         content: EndpointRequestJSON = request.json
-        if not callable(engine):  # Probably will not happen
+        try:
+            engines[device_id]
+        except IndexError:
             return flask.Response(
                 json.dumps({
                     'error':
-                    'Not ready yet. Please wait and try again later.'
+                    f'Invalid device ID. len(engines) = {len(engines)}, device_id = {device_id}'
                 }), 500)
+        if not callable(engines[device_id]):  # Should not happen
+            return flask.Response(
+                json.dumps({'error': f'engines[{device_id}] is not callable'}),
+                500)
         try:
-            return engine(
+            return engines[device_id](
                 content['input'],
                 **(content['model_args'] if 'model_args' in content else {}))
         except Exception as e:
