@@ -1,6 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:22.08-py3
-
-
+FROM nvidia/cuda:11.6.1-devel-ubuntu20.04
 
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
@@ -9,21 +7,28 @@ ENV TRANSFORMERS_CACHE=/theapp/transformer_cache
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN=true
+ENV MINICONDA_SCRIPT=Miniconda3-latest-Linux-x86_64.sh
+ENV CONDA=${THEAPP}/miniconda/bin/conda
 
-RUN echo "APT { Get { AllowUnauthenticated "1"; }; };" > /etc/apt/apt.conf.d/99allow-unauth
-RUN echo America/New_York > /etc/timezone
-RUN apt update && apt-get install -y build-essential bash language-pack-en-base nginx software-properties-common supervisor && add-apt-repository ppa:deadsnakes/ppa && apt-get install -y python3.10 python3.10-dev python3.10-venv
-RUN useradd --create-home --home-dir ${THEAPP} --shell /sbin/nologin --system ${RUNNING_USER}
+RUN echo 'APT { Get { AllowUnauthenticated "1"; }; };' > /etc/apt/apt.conf.d/99allow-unauth && \
+    echo America/New_York > /etc/timezone && \
+    apt update && apt-get install -y build-essential bash language-pack-en-base nginx software-properties-common supervisor wget && \
+    add-apt-repository ppa:deadsnakes/ppa && apt-get install -y python3.10 python3.10-dev python3.10-venv && \
+    useradd --create-home --home-dir ${THEAPP} --shell /sbin/nologin --system ${RUNNING_USER}
+COPY --chown=${RUNNING_USER}:${RUNNING_USER} environment.yml ${THEAPP}/
 USER ${RUNNING_USER}
-RUN python3.10 -m venv ${THEAPP}/venv
-COPY --chown=${RUNNING_USER}:${RUNNING_USER} poetry.lock pyproject.toml container-data/* ${THEAPP}/
-RUN mkdir ${THEAPP}/endpoint
-COPY --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/* $THEAPP/endpoint/
-WORKDIR ${THEAPP}
-RUN bash -c "source venv/bin/activate && pip install --upgrade pip poetry && poetry install"
+RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/${MINICONDA_SCRIPT} && \
+    bash /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
+    ${CONDA} update -n base -c defaults conda && \
+    ${CONDA} env create -f ${THEAPP}/environment.yml && \
+    mkdir ${THEAPP}/endpoint
+RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
+COPY --chown=${RUNNING_USER}:${RUNNING_USER} container-data/* ${THEAPP}/
+COPY --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/* ${THEAPP}/endpoint/
 
 EXPOSE 80
 EXPOSE 443
 
 USER root
+WORKDIR ${THEAPP}
 CMD ["/usr/bin/supervisord", "-c", "/theapp/supervisord.ini"]
