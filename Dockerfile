@@ -30,5 +30,8 @@ EXPOSE 80
 EXPOSE 443
 
 USER root
+ARG n_threads=1
+ENV N_THREADS=${n_threads}
+RUN sed -re "s/threads =.*/threads = ${N_THREADS}/" -i ${THEAPP}/uwsgi.ini
 WORKDIR ${THEAPP}
 CMD ["/usr/bin/supervisord", "-c", "/theapp/supervisord.ini"]
