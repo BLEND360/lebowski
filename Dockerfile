@@ -4,7 +4,6 @@ ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
 ENV HF_DATASETS_CACHE=/theapp/dataset_cache
 ENV TRANSFORMERS_CACHE=/theapp/transformer_cache
-ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN=true
 ENV MINICONDA_SCRIPT=Miniconda3-latest-Linux-x86_64.sh
@@ -19,10 +18,11 @@ COPY --chown=${RUNNING_USER}:${RUNNING_USER} environment.yml ${THEAPP}/
 USER ${RUNNING_USER}
 RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/${MINICONDA_SCRIPT} && \
     bash /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
-    ${CONDA} env create --debug -f ${THEAPP}/environment.yml && \
+    ${CONDA} env create -f ${THEAPP}/environment.yml && \
     mkdir ${THEAPP}/endpoint
-RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch
-RUN ${THEAPP}/miniconda/envs/lebowski/bin/python -c 'from transformers.pipelines import pipeline; pipeline("summarization", model="google/pegasus-cnn_dailymail")("input")'
+RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
+COPY --chown=${RUNNING_USER}:${RUNNING_USER} test.py ${THEAPP}/
+RUN ${THEAPP}/miniconda/envs/lebowski/bin/python ${THEAPP}/test.py
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} container-data/* ${THEAPP}/
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/* ${THEAPP}/endpoint/
 
