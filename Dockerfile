@@ -18,8 +18,8 @@ RUN echo 'APT { Get { AllowUnauthenticated "1"; }; };' > /etc/apt/apt.conf.d/99a
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} environment.yml ${THEAPP}/
 USER ${RUNNING_USER}
 RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/${MINICONDA_SCRIPT} && \
-    bash -xv /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
-    ${CONDA} update -n base -c defaults conda && \
+    bash /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
+#    ${CONDA} update -n base -c defaults conda && \
     ${CONDA} env create -f ${THEAPP}/environment.yml && \
     mkdir ${THEAPP}/endpoint
 RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
