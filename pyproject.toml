@@ -5,18 +5,36 @@ description = ""
 authors = ["Andrew Udvare <audvare@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<4.0"
 Flask = "^2.2.2"
 transformers = "^4.21.2"
 uWSGI = "^2.0.20"
 torch = "^1.12.1"
-sentencepiece = "^0.1.97"
-protobuf = "^4.21.5"
+sentencepiece = "^0.1.96"
+# https://github.com/huggingface/transformers/issues/15062
+huggingface-hub = "^0.9.1"
+torchvision = "^0.13.1"
+torchaudio = "^0.12.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 pylint-quotes = "^0.2.3"
+poetry2conda = "^0.3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry2conda]
+name = "lebowski"
+
+[tool.poetry2conda.dependencies]
+# cudatoolkit = { channel = "conda-forge", name = "cudatoolkit", version = "=11.6" }
+# protobuf = { channel = "conda-forge", name = "protobuf", version="^3.20.1" }
+Flask = { channel = "conda-forge", name = "flask" }
+huggingface-hub = { channel = "conda-forge", name = "huggingface_hub" }
+sentencepiece = { channel = "conda-forge" }
+torch = { channel = "pytorch-nightly", name = "pytorch" }
+torchaudio = { channel = "pytorch-nightly", name = "torchaudio" }
+torchvision = { channel = "pytorch-nightly", name = "torchvision" }
+transformers = { channel = "conda-forge" }
