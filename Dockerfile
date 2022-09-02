@@ -23,6 +23,7 @@ RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/$
     ${CONDA} env create -f ${THEAPP}/environment.yml && \
     mkdir ${THEAPP}/endpoint
 RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
+RUN ${THEAPP}/miniconda/envs/lebowski/bin/python -c 'import torch; from transformers.pipelines import pipeline; engine = pipeline("summarization", model="google/pegasus-cnn_dailymail"); engine("input")'
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} container-data/* ${THEAPP}/
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/* ${THEAPP}/endpoint/
 
