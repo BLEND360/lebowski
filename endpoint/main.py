@@ -1,3 +1,4 @@
+# pylint: disable=import-outside-toplevel
 __all__ = ('app',)
 
 from os.path import isfile
@@ -35,14 +36,14 @@ def endpoint() -> Any:
         torch.multiprocessing.set_start_method('spawn')
     except RuntimeError:
         pass
-    LAST_DEVICE_INDEX = torch.cuda.device_count() - 1
+    last_device_index = torch.cuda.device_count() - 1
     from transformers.pipelines import pipeline
     if request.json:
         with sqlite3.connect(DATABASE_FILE) as conn:
             cur = conn.cursor()
             cur.execute('SELECT device_id FROM jobs ORDER BY id DESC LIMIT 1')
             device_id = (0 if not (result := cur.fetchone()) else
-                         (0 if result[0] == LAST_DEVICE_INDEX else result[0] +
+                         (0 if result[0] == last_device_index else result[0] +
                           1))
             cur.execute(
                 '''INSERT INTO jobs(device_id, completed, date_created)
