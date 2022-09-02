@@ -1,4 +1,9 @@
 {
+  "[dockerfile]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnType": false,
+    "editor.formatOnPaste": false
+  },
   "[python]": {
     "editor.defaultFormatter": "ms-python.python",
     "editor.tabSize": 4
@@ -11,5 +16,17 @@
   "python.defaultInterpreterPath": "~/.virtualenvs/xirvik-tools/bin/python",
   "python.formatting.provider": "yapf",
   "python.linting.flake8Enabled": false,
-  "python.linting.pylintEnabled": true
+  "python.linting.pylintEnabled": true,
+  "shellformat.effectLanguages": [
+    "shellscript",
+    "dotenv",
+    "hosts",
+    "jvmoptions",
+    "ignore",
+    "gitignore",
+    "properties",
+    "spring-boot-properties",
+    "azcli",
+    "bats"
+  ]
 }
