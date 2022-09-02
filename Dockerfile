@@ -20,7 +20,7 @@ USER ${RUNNING_USER}
 RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/${MINICONDA_SCRIPT} && \
     bash /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
 #    ${CONDA} update -n base -c defaults conda && \
-    ${CONDA} env create -f ${THEAPP}/environment.yml && \
+    ${CONDA} env create --debug -f ${THEAPP}/environment.yml && \
     mkdir ${THEAPP}/endpoint
 RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch-nightly
 RUN ${THEAPP}/miniconda/envs/lebowski/bin/python -c 'import torch; from transformers.pipelines import pipeline; engine = pipeline("summarization", model="google/pegasus-cnn_dailymail"); engine("input")'
