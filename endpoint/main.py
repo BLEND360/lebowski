@@ -5,6 +5,7 @@ from os.path import isfile
 from typing import Any
 import json
 import sqlite3
+from uwsgidecorators import postfork
 
 from flask import Flask, request
 
@@ -13,6 +14,8 @@ import flask
 from .app_typing import EndpointRequestJSON
 
 app = Flask(__name__)
+engine: Any = None
+last_device_index = 0
 
 DATABASE_FILE = './db.sqlite'
 
@@ -24,22 +27,31 @@ if need_schema:
                               completed INT NOT NULL CHECK(completed == 0 || completed == 1),
                               date_created TEXT NOT NULL)''')
 
-engine: Any = None
+
+@postfork
+def preload_engine():
+    global engine, last_device_index  # pylint: disable=invalid-name
+    if not engine:
+        # https://stackoverflow.com/questions/34145861/valueerror-failed-to-parse-cpython-sys-version-after-using-conda-command
+        import sys
+        sys.version = '3.10.1 (main, Aug 13 2022, 12:04:39) [GCC 11.3.0]'
+        # Setting the start method must be done before importing transformers.pipeines
+        import torch
+        try:
+            torch.multiprocessing.set_start_method('spawn')
+        except RuntimeError:
+            pass
+        last_device_index = torch.cuda.device_count() - 1
+        from transformers.pipelines import pipeline
+        if not engine:
+            engine = pipeline('summarization',
+                              model='google/pegasus-cnn_dailymail',
+                              device=0)
 
 
 @app.route('/', methods=['POST'])
 def endpoint() -> Any:
-    # https://stackoverflow.com/questions/34145861/valueerror-failed-to-parse-cpython-sys-version-after-using-conda-command
-    import sys
-    sys.version = '3.10.1 (main, Aug 13 2022, 12:04:39) [GCC 11.3.0]'
-    # Setting the start method must be done before importing transformers.pipeines
-    import torch
-    try:
-        torch.multiprocessing.set_start_method('spawn')
-    except RuntimeError:
-        pass
-    last_device_index = torch.cuda.device_count() - 1
-    from transformers.pipelines import pipeline
+    global engine, last_device_index  # pylint: disable=invalid-name,global-variable-not-assigned
     if request.json:
         with sqlite3.connect(DATABASE_FILE) as conn:
             cur = conn.cursor()
@@ -51,12 +63,13 @@ def endpoint() -> Any:
                 '''INSERT INTO jobs(device_id, completed, date_created)
             VALUES (?, 0, datetime("now"))''', (device_id,))
             job_id = cur.execute('SELECT LAST_INSERT_ROWID()').fetchone()[0]
-        global engine  # pylint: disable=invalid-name
-        if not engine:
-            engine = pipeline('summarization',
-                              model='google/pegasus-cnn_dailymail',
-                              device=device_id)
         content: EndpointRequestJSON = request.json
+        if not callable(engine):  # Probably will not happen
+            return flask.Response(
+                json.dumps({
+                    'error':
+                    'Not ready yet. Please wait and try again later.'
+                }), 500)
         try:
             return engine(
                 content['input'],
