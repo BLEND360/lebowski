@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.6.1-devel-ubuntu20.04
+FROM --platform=linux/amd64 nvidia/cuda:11.6.1-devel-ubuntu20.04
 
 ENV RUNNING_USER=nginx
 ENV THEAPP=/theapp
