@@ -75,7 +75,7 @@ def call_next_available_pipeline(engines_key: str, *args: Any,
                                  **kwargs: Any) -> Any:
     global ENGINES, last_device_index  # pylint: disable=invalid-name,global-variable-not-assigned
     if (device_id := find_next_device(engines_key)) is None:
-        return flask.Response({'error': 'Busy.'}, 503)
+        return flask.Response(json.dumps({'error': 'Busy.'}), 503)
     try:
         ENGINES[engines_key][device_id]
     except IndexError:
