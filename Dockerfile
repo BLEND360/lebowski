@@ -11,7 +11,7 @@ ENV CONDA=${THEAPP}/miniconda/bin/conda
 ARG tz=America/New_York
 ENV _TIMEZONE=${tz}
 ARG pytorch_suffix
-ENV _PYTORCH_SUFFIX=-nightly
+ENV _PYTORCH_SUFFIX=${pytorch_suffix}
 
 RUN echo 'APT { Get { AllowUnauthenticated "1"; }; };' > /etc/apt/apt.conf.d/99allow-unauth && \
     echo ${_TIMEZONE} > /etc/timezone && \
