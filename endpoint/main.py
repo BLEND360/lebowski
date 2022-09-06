@@ -38,6 +38,7 @@ cache = Cache(app,
                   'CACHE_TYPE': 'FileSystemCache',
                   'CACHE_DIR': '/theapp/cache'
               })
+cache.set('preloading', True)
 cuda_device_count = 0  # pylint: disable=invalid-name
 ENGINES: dict[str, list[Any]] = dict((key_, []) for key_ in MODEL_ARGS)
 
@@ -46,6 +47,7 @@ ENGINES: dict[str, list[Any]] = dict((key_, []) for key_ in MODEL_ARGS)
 def preload_engines():
     global ENGINES, cuda_device_count  # pylint: disable=invalid-name,global-variable-not-assigned
     # Setting the start method must be done before importing transformers.pipeines
+
     import torch
     try:
         torch.multiprocessing.set_start_method('spawn')
@@ -57,6 +59,7 @@ def preload_engines():
         for device_index in range(cuda_device_count):
             ENGINES[key].append(pipeline(*args, **kwargs, device=device_index))
             cache.set(f'{key}.{device_index}', False)
+    cache.set('preloading', False)
 
 
 def find_next_device(key: str) -> int | None:
@@ -73,6 +76,9 @@ def clear_device(engines_key: str, index: int):
 
 def call_next_available_pipeline(engines_key: str, *args: Any,
                                  **kwargs: Any) -> Any:
+    if cache.get('preloading') is True:
+        return flask.Response(
+            json.dumps({'error': 'Still preloading. Please wait.'}), 503)
     global ENGINES, last_device_index  # pylint: disable=invalid-name,global-variable-not-assigned
     if (device_id := find_next_device(engines_key)) is None:
         return flask.Response(json.dumps({'error': 'Busy.'}), 503)
