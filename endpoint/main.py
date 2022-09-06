@@ -35,8 +35,8 @@ MODEL_ARGS = {
 app = Flask(__name__)
 cache = Cache(app,
               config={
-                  'CACHE_TYPE': 'uwsgi',
-                  'CACHE_UWSGI_NAME': 'mycache@localhost'
+                  'CACHE_TYPE': 'FileSystemCache',
+                  'CACHE_DIR': '/theapp/cache'
               })
 cuda_device_count = 0  # pylint: disable=invalid-name
 ENGINES: dict[str, list[Any]] = dict((key_, []) for key_ in MODEL_ARGS)
@@ -45,33 +45,30 @@ ENGINES: dict[str, list[Any]] = dict((key_, []) for key_ in MODEL_ARGS)
 @postfork
 def preload_engines():
     global ENGINES, cuda_device_count  # pylint: disable=invalid-name,global-variable-not-assigned
-    if len(ENGINES) == 0:
-
-        # Setting the start method must be done before importing transformers.pipeines
-        import torch
-        try:
-            torch.multiprocessing.set_start_method('spawn')
-        except RuntimeError:
-            pass
-        cuda_device_count = torch.cuda.device_count()
-        from transformers.pipelines import pipeline
-        for key, (args, kwargs) in MODEL_ARGS.items():
-            for device_index in range(cuda_device_count):
-                ENGINES[key].append(
-                    pipeline(*args, **kwargs, device=device_index))
-                cache.set(f'{key}@{device_index}', False)
+    # Setting the start method must be done before importing transformers.pipeines
+    import torch
+    try:
+        torch.multiprocessing.set_start_method('spawn')
+    except RuntimeError:
+        pass
+    cuda_device_count = torch.cuda.device_count()
+    from transformers.pipelines import pipeline
+    for key, (args, kwargs) in MODEL_ARGS.items():
+        for device_index in range(cuda_device_count):
+            ENGINES[key].append(pipeline(*args, **kwargs, device=device_index))
+            cache.set(f'{key}.{device_index}', False)
 
 
 def find_next_device(key: str) -> int | None:
     for i in range(cuda_device_count):
-        if not cache.get(f'{key}@{i}'):
-            cache.set(f'{key}@{i}', True)
+        if cache.get(f'{key}.{i}') is False:
+            cache.set(f'{key}.{i}', True)
             return i
     return None
 
 
 def clear_device(engines_key: str, index: int):
-    cache.set(f'{engines_key}@{index}', False)
+    cache.set(f'{engines_key}.{index}', False)
 
 
 def call_next_available_pipeline(engines_key: str, *args: Any,
@@ -86,7 +83,7 @@ def call_next_available_pipeline(engines_key: str, *args: Any,
             json.dumps({
                 'error':
                 f'Invalid device ID. len(engines[{engines_key}]) = '
-                f'{len(ENGINES["sum1"])}, device_id = {device_id}'
+                f'{len(ENGINES[engines_key])}, device_id = {device_id}'
             }), 500)
     if not callable(ENGINES[engines_key][device_id]):  # Should not happen
         return flask.Response(
@@ -112,7 +109,7 @@ def endpoint() -> Any:
     return {'error': 'Invalid input'}
 
 
-@app.route('/pegasus-paraphrase')
+@app.route('/pegasus-paraphrase', methods=['POST'])
 def paraphrase() -> Any:
     if request.json:
         content: EndpointRequestJSON = request.json
@@ -122,7 +119,7 @@ def paraphrase() -> Any:
     return {'error': 'Invalid input'}
 
 
-@app.route('/zero-shot-classification')
+@app.route('/zero-shot-classification', methods=['POST'])
 def zero_shot_classification():
     if request.json:
         content: EndpointRequestJSON = request.json
