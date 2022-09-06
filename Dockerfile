@@ -8,11 +8,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN=true
 ENV MINICONDA_SCRIPT=Miniconda3-latest-Linux-x86_64.sh
 ENV CONDA=${THEAPP}/miniconda/bin/conda
+ARG tz=America/New_York
+ENV _TIMEZONE=${tz}
 
 RUN echo 'APT { Get { AllowUnauthenticated "1"; }; };' > /etc/apt/apt.conf.d/99allow-unauth && \
-    echo America/New_York > /etc/timezone && \
-    apt update && apt-get install -y build-essential bash language-pack-en-base nginx software-properties-common supervisor wget && \
-    add-apt-repository ppa:deadsnakes/ppa && apt-get install -y python3.10 python3.10-dev python3.10-venv && \
+    echo ${_TIMEZONE} > /etc/timezone && \
+    apt update && \
+    apt-get install -y build-essential bash language-pack-en-base nginx software-properties-common supervisor wget && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get install -y python3.10 python3.10-dev python3.10-venv && \
     useradd --create-home --home-dir ${THEAPP} --shell /sbin/nologin --system ${RUNNING_USER}
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} environment.yml ${THEAPP}/
 USER ${RUNNING_USER}
