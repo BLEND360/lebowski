@@ -100,7 +100,7 @@ def call_next_available_pipeline(engines_key: str, *args: Any,
         clear_device(engines_key, device_id)
 
 
-@app.route('/', methods=['POST'])
+@app.route('/pegasus-summary', methods=['POST'])
 def endpoint() -> Any:
     if request.json:
         content: EndpointRequestJSON = request.json
