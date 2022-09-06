@@ -3,6 +3,10 @@ __all__ = ('app',)
 
 from typing import Any
 import json
+# https://stackoverflow.com/questions/34145861/valueerror-failed-to-parse-cpython-sys-version-after-using-conda-command
+import sys
+
+sys.version = '3.10.1 (main, Aug 13 2022, 12:04:39) [GCC 11.3.0]'
 
 from flask import Flask, request
 from flask_caching import Cache
@@ -42,9 +46,7 @@ ENGINES: dict[str, list[Any]] = dict((key_, []) for key_ in MODEL_ARGS)
 def preload_engines():
     global ENGINES, cuda_device_count  # pylint: disable=invalid-name,global-variable-not-assigned
     if len(ENGINES) == 0:
-        # https://stackoverflow.com/questions/34145861/valueerror-failed-to-parse-cpython-sys-version-after-using-conda-command
-        import sys
-        sys.version = '3.10.1 (main, Aug 13 2022, 12:04:39) [GCC 11.3.0]'
+
         # Setting the start method must be done before importing transformers.pipeines
         import torch
         try:
