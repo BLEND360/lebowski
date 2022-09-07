@@ -47,7 +47,7 @@ def preload_engines():
     for key, (args, kwargs) in MODEL_ARGS.items():
         for device_index in range(cuda_device_count):
             ENGINES[key].append(pipeline(*args, **kwargs, device=device_index))
-            print('setting cache')
+            print('setting cache during init')
             print(f'{key}.{device_index}')
             cache.set(f'{key}.{device_index}', False)
     print('Done preloading engines')
