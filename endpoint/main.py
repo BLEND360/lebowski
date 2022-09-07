@@ -27,7 +27,9 @@ app = Flask(__name__)
 cache = Cache(app,
               config={
                   'CACHE_DIR': '/theapp/cache',
-                  'CACHE_TYPE': 'FileSystemCache'
+                  'CACHE_TYPE': 'FileSystemCache',
+                  'CACHE_DEFAULT_TIMEOUT': 0,
+                  'CACHE_THRESHOLD': 0
               })
 cuda_device_count = 0  # pylint: disable=invalid-name
 ENGINES: dict[str, list[Any]] = dict((key_, []) for key_ in MODEL_ARGS)
