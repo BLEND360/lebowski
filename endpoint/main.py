@@ -47,19 +47,27 @@ def preload_engines():
     for key, (args, kwargs) in MODEL_ARGS.items():
         for device_index in range(cuda_device_count):
             ENGINES[key].append(pipeline(*args, **kwargs, device=device_index))
+            print('setting cache')
+            print(f'{key}.{device_index}')
             cache.set(f'{key}.{device_index}', False)
     print('Done preloading engines')
 
 
 def find_next_device(key: str) -> int | None:
     for i in range(cuda_device_count):
-        if cache.get(f'{key}.{i}') is False:
+        fetched_item = cache.get(f'{key}.{i}')
+        print('looking up cache')
+        print(f'{key}.{i}')
+        print(fetched_item)
+        if fetched_item is False or not fetched_item:
             cache.set(f'{key}.{i}', True)
             return i
     return None
 
 
 def clear_device(engines_key: str, index: int):
+    print('calling clear device')
+    print(f'{engines_key}.{index}')
     cache.set(f'{engines_key}.{index}', False)
 
 
@@ -88,6 +96,7 @@ def call_next_available_pipeline(engines_key: str, *args: Any,
     except Exception as e:
         return flask.Response(json.dumps({'error': str(e)}), 500)
     finally:
+        print('im actually clearing the engine')
         clear_device(engines_key, device_id)
 
 
