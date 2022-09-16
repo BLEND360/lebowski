@@ -16,6 +16,7 @@ huggingface-hub = "^0.9.1"
 torchvision = "^0.13.1"
 torchaudio = "^0.12.1"
 Flask-Caching = "^2.0.1"
+watchtower = "^3.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
