@@ -3,6 +3,7 @@ __all__ = ('create_app',)
 
 import logging
 
+from botocore.exceptions import NoCredentialsError
 from flask import Flask
 import watchtower
 
@@ -28,10 +29,13 @@ def create_app() -> Flask:
                        'CACHE_DEFAULT_TIMEOUT': 0,
                        'CACHE_THRESHOLD': 0
                    })
-    # handler = watchtower.CloudWatchLogHandler(log_group_name=app.name)
-    # app.logger.addHandler(handler)  # pylint: disable=no-member
-    # logging.getLogger('werkzeug').addHandler(handler)
-    # logging.getLogger('endpoint.preload').addHandler(handler)
+    try:
+        handler = watchtower.CloudWatchLogHandler(log_group_name=app.name)
+        app.logger.addHandler(handler)  # pylint: disable=no-member
+        logging.getLogger('werkzeug').addHandler(handler)
+        logging.getLogger('endpoint.preload').addHandler(handler)
+    except NoCredentialsError:
+        pass
     from .routes import cache_route_blueprint, model_route_blueprint
     app.register_blueprint(cache_route_blueprint)
     app.register_blueprint(model_route_blueprint)
