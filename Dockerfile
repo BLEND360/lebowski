@@ -12,6 +12,8 @@ ARG tz=America/New_York
 ENV _TIMEZONE=${tz}
 ARG pytorch_suffix
 ENV _PYTORCH_SUFFIX=${pytorch_suffix}
+ARG conda_debug=--debug
+ENV _CONDA_DEBUG=${conda_debug}
 
 RUN echo 'APT { Get { AllowUnauthenticated "1"; }; };' > /etc/apt/apt.conf.d/99allow-unauth && \
     echo ${_TIMEZONE} > /etc/timezone && \
@@ -24,13 +26,13 @@ COPY --chown=${RUNNING_USER}:${RUNNING_USER} environment.yml ${THEAPP}/
 USER ${RUNNING_USER}
 RUN wget -q https://repo.anaconda.com/miniconda/${MINICONDA_SCRIPT} -O /theapp/${MINICONDA_SCRIPT} && \
     bash /theapp/${MINICONDA_SCRIPT} -b -p ${THEAPP}/miniconda && \
-    ${CONDA} env create --debug -f ${THEAPP}/environment.yml && \
+    ${CONDA} env create ${_CONDA_DEBUG} -f ${THEAPP}/environment.yml && \
     mkdir ${THEAPP}/endpoint
 RUN ${CONDA} install pytorch torchvision cudatoolkit=11 -c pytorch${_PYTORCH_SUFFIX}
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} test.py ${THEAPP}/
 RUN ${THEAPP}/miniconda/envs/lebowski/bin/python ${THEAPP}/test.py
 COPY --chown=${RUNNING_USER}:${RUNNING_USER} container-data/* ${THEAPP}/
-COPY --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/* ${THEAPP}/endpoint/
+ADD --chown=${RUNNING_USER}:${RUNNING_USER} endpoint/ ${THEAPP}/endpoint/
 
 EXPOSE 80
 EXPOSE 443
@@ -39,5 +41,6 @@ USER root
 ARG n_threads=1
 ENV N_THREADS=${n_threads}
 RUN sed -re "s/threads =.*/threads = ${N_THREADS}/" -i ${THEAPP}/uwsgi.ini
+ENV AWS_DEFAULT_REGION=us-east-1
 WORKDIR ${THEAPP}
 CMD ["/usr/bin/supervisord", "-c", "/theapp/supervisord.ini"]
