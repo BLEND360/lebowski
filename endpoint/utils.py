@@ -14,7 +14,7 @@ postfork_chain = []
 
 @dataclass
 class CUDAInfo:
-    cuda_device_count = 0
+    device_count = 0
 
 
 cuda_info = CUDAInfo()
@@ -39,7 +39,8 @@ class postfork:  # pylint: disable=invalid-name,too-few-public-methods
 
 
 def find_next_device(key: str) -> int | None:
-    for i in range(cuda_info.cuda_device_count):
+    current_app.logger.debug('CUDA device count: %d', cuda_info.device_count)
+    for i in range(cuda_info.device_count):
         fetched_item = cache.get(f'{key}.{i}')
         current_app.logger.debug('looking up cache')
         current_app.logger.debug(f'{key}.{i}')

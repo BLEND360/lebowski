@@ -17,7 +17,7 @@ cache_route_blueprint = Blueprint('cache_route_blueprint', __name__)
 def reset_cache() -> dict[str, bool]:
     values = {}
     for key, (_, __) in MODEL_ARGS.items():
-        for i in range(cuda_info.cuda_device_count):
+        for i in range(cuda_info.device_count):
             cache_key = f'{key}.{i}'
             cache.set(f'{key}.{i}', False)
             values[cache_key] = False
@@ -43,7 +43,7 @@ def reset_cache_json() -> Any:
 def cache_status() -> dict[str, bool]:
     values = {}
     for key, (_, __) in MODEL_ARGS.items():
-        for i in range(cuda_info.cuda_device_count):
+        for i in range(cuda_info.device_count):
             cache_key = f'{key}.{i}'
             values[cache_key] = cache.get(f'{key}.{i}')
     return values

@@ -2,6 +2,7 @@
 __all__ = ('create_app',)
 
 import logging
+import sys
 
 from botocore.exceptions import NoCredentialsError
 from flask import Flask
@@ -32,8 +33,8 @@ def create_app() -> Flask:
     try:
         handler = watchtower.CloudWatchLogHandler(log_group_name=app.name)
         app.logger.addHandler(handler)  # pylint: disable=no-member
+        app.logger.setLevel(logging.ERROR)  # pylint: disable=no-member
         logging.getLogger('werkzeug').addHandler(handler)
-        logging.getLogger('endpoint.preload').addHandler(handler)
     except NoCredentialsError:
         pass
     from .routes import cache_route_blueprint, model_route_blueprint
@@ -48,6 +49,17 @@ def create_app() -> Flask:
 @postfork
 def preload_engines():
     global ENGINES  # pylint: disable=invalid-name,global-variable-not-assigned
+    try:
+        watchtower_handler = watchtower.CloudWatchLogHandler(
+            log_group_name='endpoint.preload')
+    except NoCredentialsError:
+        watchtower_handler = None
+    logger = logging.getLogger('endpoint.preload')
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    if watchtower_handler:
+        logger.addHandler(watchtower_handler)
+    logger.debug('preload_engines() starting')
     # Setting the start method must be done before importing transformers.pipeines
     import torch
     try:
@@ -55,10 +67,12 @@ def preload_engines():
     except RuntimeError:
         pass
     from transformers.pipelines import pipeline
-    cuda_info.cuda_device_count = torch.cuda.device_count()
-    logger = logging.getLogger('endpoint.preload')
+    cuda_info.device_count = torch.cuda.device_count()
+    if cuda_info.device_count == 0:
+        raise ValueError('No CUDA GPUs detected')
+    logger.debug('CUDA device count: %d', cuda_info.device_count)
     for key, (args, kwargs) in MODEL_ARGS.items():
-        for device_index in range(cuda_info.cuda_device_count):
+        for device_index in range(cuda_info.device_count):
             ENGINES[key].append(pipeline(*args, **kwargs, device=device_index))
             logger.debug('setting cache during init')
             logger.debug('%s.%s', key, device_index)
