@@ -7,6 +7,7 @@ load-plugins=pylint_quotes
 
 [MESSAGES CONTROL]
 disable=broad-except,
+        logging-too-many-args,
         missing-class-docstring,
         missing-function-docstring,
         missing-module-docstring,
@@ -17,8 +18,7 @@ max-nested-blocks=6
 
 [LOGGING]
 logging-format-style=new
-logging-modules=logging,
-                loguru
+logging-modules=logging
 
 ; [VARIABLES]
 ; allow-global-unused-variables=no
