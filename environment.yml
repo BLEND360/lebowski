@@ -21,3 +21,4 @@ dependencies:
   - pytorch-nightly::torchaudio
   - conda-forge::cudatoolkit>=11.3.0,<11.4.0
   - anaconda::protobuf>=3.20.1,<4.0.0
+  - conda-forge::watchtower>=3.0.0,<4.0.0
