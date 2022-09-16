@@ -33,7 +33,6 @@ inlinevar
 itertools
 labelsize
 levelno
-loguru
 lunchy
 maxdepth
 metaclass
